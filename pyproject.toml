@@ -1,0 +1,15 @@
+[project]
+name = "comfyui-y7-sbs-2dto3d"
+description = "Convert 2D images and videos to 3D SBS (side-by-side) format"
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["torch"]
+
+[project.urls]
+Repository = "https://github.com/yushan777/ComfyUI-Y7-SBS-2Dto3D"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "yushan777"
+DisplayName = "ComfyUI-Y7-SBS-2Dto3D"
+Icon = ""
