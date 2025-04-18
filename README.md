@@ -62,7 +62,9 @@ Two custom ComfyUI nodes that convert 2D images or videos into a simulated 3D si
 >   - **mode**: 
 >     - Parallel: For parallel viewing (left eye sees left image, right sees right image)
 >     - Cross-eyed: For cross-eyed viewing (left eye sees right image and vice versa) - useful to check the effect if you do not have a 3D device.
->   - **depth_blur_strength**: Controls how much to blur the depth map transitions (3-15, odd values only). Higher values create smoother depth transitions but may lose detail.
+>   - **depth_blur_strength**: Controls how much to blur the depth map transitions (3-33, odd values only). 
+>     - Lower values for sharper depth separation between objects or layers.
+>     - Higher values for smoother transitions between depth planes, though this may introduce some distortion in some images.
 > </details>
 
 
@@ -84,7 +86,9 @@ Two custom ComfyUI nodes that convert 2D images or videos into a simulated 3D si
 >   - **mode**: 
 >     - Parallel: For parallel viewing (left eye sees left image, right sees right image)
 >     - Cross-eyed: For cross-eyed viewing (left eye sees right image and vice versa) - useful to check the effect if you do not have a 3D device.
->   - **depth_blur_strength**: Controls how much to blur the depth map transitions (3-15, odd values only). Higher values create smoother depth transitions but may lose detail.
+>   - **depth_blur_strength**: Controls how much to blur the depth map transitions (3-33, odd values only). 
+>     - Lower values for sharper depth separation between objects or layers.
+>     - Higher values for smoother transitions between depth planes, though this may introduce some distortion in some images.
 >   - **temporal_smoothing**: Controls smoothing between frames (0.0-0.5). Higher values create more consistent depth perception between frames but may reduce responsiveness to rapid depth changes.
 >   - **batch_size**: Number of video frames to process at once. higher = more memory usage.
 > </details>
