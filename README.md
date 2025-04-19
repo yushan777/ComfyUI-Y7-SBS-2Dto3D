@@ -121,5 +121,7 @@ You can find and download sample SBS images and videos generated from these cust
 
 ![kitten](https://github.com/yushan777/repo_assets/blob/main/comfyui-y7-sbs-2dto3d/photo/kitten1_sbs.jpg)
 
+Image credits: [Pixabay](https://pixabay.com/)
+
 ### Viewing Devices
 If you are creating sbs images or video clips then it is assumed that you already have a viewing device and software.  In any case, what I have been using is the Quest 3 with the immerGallery software.
