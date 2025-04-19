@@ -113,7 +113,13 @@ The included [workflows](workflows/) both use [Kijai's DepthAnythingV2 custom no
 Note that some 3D viewer apps will interpret square aspect ratios per eye as VR180 format. For example in ImmerGallery, you can force the format by suffixing the filename with _LR, or you can modify the image via its menu.
 
 ### Sample SBS Images & Videos
-You can find and download sample SBS images and videos generated from these custom nodes [here](https://github.com/yushan777/repo_assets/tree/main/comfyui-y7-sbs-2dto3d), Transfer them to your device and check them out!.
+You can find and download sample SBS images and videos generated from these custom nodes [here](https://github.com/yushan777/repo_assets/tree/main/comfyui-y7-sbs-2dto3d), Transfer them to your device and check them out. Below are some examples.
+
+![car](https://github.com/yushan777/repo_assets/blob/main/comfyui-y7-sbs-2dto3d/photo/car_sbs.jpg)
+
+![woman1](https://github.com/yushan777/repo_assets/blob/main/comfyui-y7-sbs-2dto3d/photo/woman1_sbs.jpg)
+
+![kitten](https://github.com/yushan777/repo_assets/blob/main/comfyui-y7-sbs-2dto3d/photo/kitten1_sbs.jpg)
 
 ### Viewing Devices
 If you are creating sbs images or video clips then it is assumed that you already have a viewing device and software.  In any case, what I have been using is the Quest 3 with the immerGallery software.
