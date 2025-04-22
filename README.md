@@ -1,6 +1,6 @@
 # ComfyUI-Y7-SBS-2Dto3D
 
-Two custom ComfyUI nodes that convert 2D images or videos into a simulated 3D side-by-side (SBS) format, viewable on compatible devices such as VR/AR headsets like Meta Quest, Apple Vision Pro, HTC Vive, or even those crappy cardboard ones.
+Two ComfyUI custom nodes that convert 2D images or videos into a simulated 3D side-by-side (SBS) format, viewable on compatible devices such as VR/AR headsets like Meta Quest, Apple Vision Pro, HTC Vive, or even those crappy cardboard ones.
 
 ![sbs image workflow](assets/sbs-image-workflow.jpg)
 
