@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-y7-sbs-2dto3d"
-description = "Convert 2D images and videos to 3D SBS (side-by-side) format"
-version = "1.0.0"
+description = "Convert 2D images and videos to 3D, SBS (side-by-side) format"
+version = "1.0.1"
 license = {file = "LICENSE"}
 dependencies = ["torch"]
 
