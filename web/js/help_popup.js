@@ -283,7 +283,7 @@ function chainCallback(object, property, callback) {
 app.registerExtension({
     name: "Y7.SBS.HelpPopup",
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.category?.startsWith("Y7")) {
+        if (nodeData?.category?.startsWith("Y7 SBS")) {
             if (nodeData.description) {
                 // Extract short description for tooltips
                 const el = document.createElement("div");
