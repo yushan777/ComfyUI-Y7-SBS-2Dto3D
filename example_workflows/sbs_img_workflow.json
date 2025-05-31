@@ -205,29 +205,6 @@
       "bgcolor": "#533"
     },
     {
-      "id": 137,
-      "type": "MarkdownNote",
-      "pos": [
-        -1210,
-        -340
-      ],
-      "size": [
-        500,
-        320
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "If you encounter Out-Of-Memory (OOM) errors during depth map generation, the first thing to try is to reduce the resolution of the image before passing it to the depth estimation model (DepthAnythingV2).\n\nThe **Load Image** node outputs images as float32 tensors, which can be quite VRAM-intensive — especially at high resolutions (e.g., 1280×1280 or more). But remember: depth maps are about relative distances, not fine details. This means:\n\n- Lower-resolution depth maps (like 512×512 or 1024×1024) still preserve useful spatial information.\n\n- Downscaling the input image before depth generation not only reduces VRAM usage, but can also smooth the depth map — often improving the final 3D/parallax effect.\n\n\nThe SBS node will handle the rescaling back to match the base_image's resolution, but you can do this manually before passing it into the SBS node if you wish. \n\n=========================== \n\nAlternatively use a smaller variant of Depth-Anything-V2 model (at the cost of accuracy).\n\nFor 24GB VRAM: \n\n**depth_anything_v2_vitl_fp16** can handle up to ≈1536x1536 (2.36MP) \n\n**depth_anything_v2_vitb_fp16** can handle up to ≈1761x1761 (3.1MP) \n\n**depth_anything_v2_vits_fp16** can handle up to ≈1966x1966 (3.9MP) \n\n"
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
-    },
-    {
       "id": 141,
       "type": "Note",
       "pos": [
@@ -239,7 +216,7 @@
         100
       ],
       "flags": {},
-      "order": 4,
+      "order": 3,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -334,9 +311,10 @@
         }
       ],
       "properties": {
-        "aux_id": "yushan777/ComfyUI-Y7-SBS-2Dto3D",
+        "cnr_id": "comfyui-y7-sbs-2dto3d",
         "ver": "2b031688d8cfbb99444f1a9817fa843a497b03dd",
-        "Node name for S&R": "Y7_SideBySide"
+        "Node name for S&R": "Y7_SideBySide",
+        "aux_id": "yushan777/ComfyUI-Y7-SBS-2Dto3D"
       },
       "widgets_values": [
         "mesh_warping",
@@ -359,7 +337,7 @@
         340
       ],
       "flags": {},
-      "order": 5,
+      "order": 4,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -451,7 +429,7 @@
         100
       ],
       "flags": {},
-      "order": 6,
+      "order": 5,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -474,13 +452,36 @@
         151.6021728515625
       ],
       "flags": {},
-      "order": 7,
+      "order": 6,
       "mode": 0,
       "inputs": [],
       "outputs": [],
       "properties": {},
       "widgets_values": [
         "The Depth-Anything-V2 nodes will download the selected model into the directory \"models/depthanything\" if it does not exist.   \n\nThe default `...vitl-fp16` variant is approx 600MB.\n\nNote: If you are running on Apple Silicon, it seems to prefer the fp32 variant of the models otherwise it seems to crash"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 137,
+      "type": "MarkdownNote",
+      "pos": [
+        -1210,
+        -340
+      ],
+      "size": [
+        500,
+        320
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "If you encounter Out-Of-Memory (OOM) errors during depth map generation, the first thing to try is to reduce the resolution of the image before passing it to the depth estimation model (DepthAnythingV2). The generated depth map will then be scaled back up to match the original image's resolution. \n\nThe **Load Image** node outputs images as float32 tensors, which can be quite VRAM-intensive — especially at high resolutions (e.g., 1280×1280 or more). But remember: depth maps are about relative distances, not fine details. This means:\n\n- Lower-resolution depth maps (like 512×512 or 1024×1024) still preserve useful spatial information.\n\n- Downscaling the input image before depth generation not only reduces VRAM usage, but when scaled back up, can also smooth the depth map — often improving the final 3D/parallax effect.\n\n\nThe SBS node will handle the rescaling back to match the base_image's resolution, but you can do this manually before passing it into the SBS node if you wish. \n\n=========================== \n\nAlternatively use a smaller variant of Depth-Anything-V2 model (at the cost of accuracy).\n\nFor 24GB VRAM: \n\n**depth_anything_v2_vitl_fp16** can handle up to ≈1536x1536 (2.36MP) \n\n**depth_anything_v2_vitb_fp16** can handle up to ≈1761x1761 (3.1MP) \n\n**depth_anything_v2_vits_fp16** can handle up to ≈1966x1966 (3.9MP) \n\n"
       ],
       "color": "#222",
       "bgcolor": "#000"
@@ -570,17 +571,17 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 1.331000000000001,
+      "scale": 1.3310000000000004,
       "offset": [
-        872.4931375289997,
-        487.02974190263603
+        1250.2917851623586,
+        528.1890206404275
       ]
     },
+    "frontendVersion": "1.20.7",
     "VHS_latentpreview": false,
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
-    "VHS_KeepIntermediate": true,
-    "frontendVersion": "1.16.8"
+    "VHS_KeepIntermediate": true
   },
   "version": 0.4
 }
