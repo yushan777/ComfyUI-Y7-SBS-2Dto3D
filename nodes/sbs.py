@@ -27,8 +27,8 @@ from ..utils.colored_print import color, style
 # └───────────────────┴───────────────────────────────────────────────────────────────────────────────┘
 
 # Supports both parallel viewing (left eye sees left image) and cross-eyed viewing (left eye sees right image).
-# For videos, includes temporal smoothing to help reduce flickering/jittering between frames.
 
+# For videos, includes temporal smoothing to help reduce flickering/jittering between frames.
 # ┌────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 # │ Temporal Smoothing │                               Effect                                                                    │
 # │ Value              |                                                                                                         |
@@ -37,6 +37,24 @@ from ..utils.colored_print import color, style
 # │ 0.1 – 0.3          │  Mild-moderate smoothing — balances temporal consistency without too much lag.                          │
 # │ 0.5                │  Strong smoothing — maximizes stability, but may cause lag in depth response during rapid scene changes.│
 # └────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+# The convergence parameter controls the zero-disparity plane (where objects appear at screen depth).
+# This is crucial for comfortable viewing and reduces eye strain.
+# 
+# ┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
+# │ Convergence     │                                Effect                                           │
+# │ Value           │                                                                                 │
+# ├─────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
+# │ 0.0             │ Far objects (black in depth map) appear at screen depth                        │
+# │ 0.5 (default)   │ Middle depth objects appear at screen depth - balanced for most content        │
+# │ 1.0             │ Near objects (white in depth map) appear at screen depth                       │
+# └─────────────────┴─────────────────────────────────────────────────────────────────────────────────┘
+#
+# For all 3D viewing methods: Proper convergence eliminates excessive "split" and reduces eye strain.
+# This applies to anaglyph, side-by-side, VR headsets, and other stereoscopic displays.
+# Adjust convergence based on your content - portraits may benefit from higher values (0.6-0.8),
+# while landscapes may work better with lower values (0.3-0.5).
 
 DEBUG_MODE = False  # Set to False to disable debug left/right tinting
 
@@ -86,6 +104,13 @@ class Y7_SideBySide:
                     "step": 2,
                     "tooltip": "Controls how much to blur the depth map transitions. Higher values create smoother depth transitions but may lose detail. 3-15. Odd values only."
                 }),
+                "convergence": ("FLOAT", {
+                    "default": 0.5,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.05,
+                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. Proper convergence reduces eye strain for all 3D viewing methods (anaglyph, SBS, VR, etc.)."
+                }),
             },
         }
 
@@ -102,7 +127,7 @@ class Y7_SideBySide:
         return True        
 
     # ============================================================
-    def process_image_sbs(self, method, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7):
+    def process_image_sbs(self, method, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.5):
         
         # add simple 2-step progress bar
         progress = ProgressBar(2)  # Just two steps for individual image        
@@ -111,9 +136,9 @@ class Y7_SideBySide:
 
         result = None 
         if method == "grid_sampling":
-            result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
+            result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
         elif method == "mesh_warping":            
-            result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
+            result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
 
         progress.update(1)  # Final step 
         return result # Return the stored result
@@ -174,6 +199,13 @@ class Y7_VideoSideBySide:
                     "step": 1,
                     "tooltip": "Number of frames to process at once. Lower values use less memory but may be slower."
                 }),
+                "convergence": ("FLOAT", {
+                    "default": 0.5,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.05,
+                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. Proper convergence reduces eye strain for all 3D viewing methods (anaglyph, SBS, VR, etc.)."
+                }),
             },
         }
 
@@ -186,7 +218,7 @@ class Y7_VideoSideBySide:
         return True
             
     def process_video_sbs(self, frames, depth_maps, method="mesh_warping", depth_scale=30, mode="parallel", 
-                        depth_blur_strength=7, temporal_smoothing=0.2, batch_size=16):
+                        depth_blur_strength=7, temporal_smoothing=0.2, batch_size=16, convergence=0.5):
         """        
         Main function for processing video frames, balancing GPU and CPU memory usage.
         
@@ -331,7 +363,7 @@ class Y7_VideoSideBySide:
                     # Process frame with processor function
                     processed_frame = processor_fn(
                         self.device, current_frame, depth_for_frame, 
-                        depth_scale, mode, depth_blur_strength
+                        depth_scale, mode, depth_blur_strength, convergence
                     )[0]
                     
                     # Store in output tensor (direct assignment, no copies)
@@ -531,7 +563,7 @@ class Y7_VideoSideBySide:
 
 # ======================= Processing Functions =======================
 # IMAGE - GRID SAMPLING
-def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7):
+def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.5):
     """
     Create a side-by-side (SBS) stereoscopic image using grid_sampling method
     This implementation uses efficient vectorized operations for better performance.       
@@ -586,9 +618,14 @@ def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, 
     # apply depth blur to the depth map
     depth_map = apply_depth_blur(depth_map, depth_blur_strength)
     
+    # Apply convergence adjustment to depth map
+    # Convergence sets the zero-disparity plane (objects that appear at screen depth)
+    # 0.0 = far objects at screen depth, 1.0 = near objects at screen depth
+    adjusted_depth = depth_map - convergence
+    
     # Calculate disparity (pixel shift)
-    # disparity = depth_map_resized * (depth_scale / w)
-    disparity = depth_map * 255.0 * (depth_scale / w)
+    # disparity = adjusted_depth * (depth_scale / w)
+    disparity = adjusted_depth * 255.0 * (depth_scale / w)
 
     # Get cached coordinate grid
     y_grid, x_grid = get_grid_gs(h, w, target_dtype, device)
@@ -654,7 +691,7 @@ def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, 
 
 
 # IMAGE - MSH WARPING
-def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7):
+def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7, convergence=0.5):
     """
     Creates a side-by-side stereoscopic image using simple mesh warping method
     
@@ -714,11 +751,16 @@ def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30
     depth_map = apply_depth_blur(depth_map, depth_blur_strength)
 
     # =============================================================
-    # Convert depth map to disparity.
+    # Apply convergence adjustment to depth map
+    # Convergence sets the zero-disparity plane (objects that appear at screen depth)
+    # 0.0 = far objects at screen depth, 1.0 = near objects at screen depth
+    adjusted_depth = depth_map - convergence
+    
+    # Convert adjusted depth map to disparity.
     # Assumes depth map is normalized: white (1.0) = near, black (0.0) = far.
-    # Using depth directly as disparity makes nearby objects shift more,
+    # Using adjusted depth directly as disparity makes nearby objects shift more,
     # creating a natural stereoscopic effect.
-    disparity = depth_map
+    disparity = adjusted_depth
 
     base_grid = get_cached_grid_mw(H, W, target_dtype, device)
     grid = base_grid.unsqueeze(0).expand(B, H, W, 2)
