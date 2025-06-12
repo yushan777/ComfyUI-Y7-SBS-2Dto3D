@@ -40,7 +40,7 @@ from ..utils.colored_print import color, style
 
 
 # The convergence parameter controls the zero-disparity plane (where objects appear at screen depth).
-# This is crucial for comfortable viewing and reduces eye strain.
+# More important if you plan on converting the outputs into anaglyph format
 # 
 # ┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 # │ Convergence     │                                Effect                                           │
@@ -51,8 +51,8 @@ from ..utils.colored_print import color, style
 # │ 1.0             │ Near objects (white in depth map) appear at screen depth                       │
 # └─────────────────┴─────────────────────────────────────────────────────────────────────────────────┘
 #
-# For all 3D viewing methods: Proper convergence eliminates excessive "split" and reduces eye strain.
-# This applies to anaglyph, side-by-side, VR headsets, and other stereoscopic displays.
+# Proper convergence eliminates excessive "split" and reduces eye strain.
+# This applies to anaglyph more than standard SBS
 # Adjust convergence based on your content - portraits may benefit from higher values (0.6-0.8),
 # while landscapes may work better with lower values (0.3-0.5).
 
@@ -109,7 +109,7 @@ class Y7_SideBySide:
                     "min": 0.0,
                     "max": 1.0,
                     "step": 0.05,
-                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. Proper convergence reduces eye strain for all 3D viewing methods (anaglyph, SBS, VR, etc.)."
+                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. For Anaglyph format."
                 }),
             },
         }
@@ -204,7 +204,7 @@ class Y7_VideoSideBySide:
                     "min": 0.0,
                     "max": 1.0,
                     "step": 0.05,
-                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. Proper convergence reduces eye strain for all 3D viewing methods (anaglyph, SBS, VR, etc.)."
+                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. For Anaglyph format."
                 }),
             },
         }
