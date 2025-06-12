@@ -62,6 +62,9 @@ Two ComfyUI custom nodes that convert 2D images or videos into a simulated 3D si
 >   - **mode**: 
 >     - Parallel: For parallel viewing (left eye sees left image, right sees right image)
 >     - Cross-eyed: For cross-eyed viewing (left eye sees right image and vice versa) - useful to check the effect if you do not have a 3D device.
+>   - **output_type**
+>     - SBS: Outputs a standard side-by-side stereoscopic image with separate left and right views. Suitable for VR headsets, 3D TVs, cross-eyed or parallel free-viewing. The image is split in half horizontally: left eye image on the left, right eye image on the right (or reversed if using cross-eyed mode).
+>     - Anaglyph: Outputs a single red-cyan composite image that encodes stereo depth using color channels. The left eye is mapped to red, and the right eye is mapped to green/blue (cyan). This format is viewable with red-cyan 3D glasses and is ideal for quick previewing on standard monitors without special hardware.
 >   - **depth_blur_strength**: Controls how much to blur the depth map transitions (3-33, odd values only). 
 >     - Lower values for sharper depth separation between objects or layers.
 >     - Higher values for smoother transitions between depth planes, though this may introduce some distortion in some images.

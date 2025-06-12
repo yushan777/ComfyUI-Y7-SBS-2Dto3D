@@ -40,7 +40,7 @@ from ..utils.colored_print import color, style
 
 
 # The convergence parameter controls the zero-disparity plane (where objects appear at screen depth).
-# More important if you plan on converting the outputs into anaglyph format
+# This is more important if you plan on converting the outputs into anaglyph format
 # 
 # ┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 # │ Convergence     │                                Effect                                           │
@@ -48,7 +48,7 @@ from ..utils.colored_print import color, style
 # ├─────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
 # │ 0.0             │ Far objects (black in depth map) appear at screen depth                        │
 # │ 0.5 (default)   │ Middle depth objects appear at screen depth - balanced for most content        │
-# │ 1.0             │ Near objects (white in depth map) appear at screen depth                       │
+# │ 1.0+            │ Near objects (white in depth map) appear at screen depth                       │
 # └─────────────────┴─────────────────────────────────────────────────────────────────────────────────┘
 #
 # Proper convergence eliminates excessive "split" and reduces eye strain.
@@ -97,8 +97,8 @@ class Y7_SideBySide:
                 "mode": (["parallel", "cross-eyed"], {
                     "tooltip": "Parallel: For normal, parallel viewing (left eye sees left image)\n-Cross-eyed: For cross-eyed viewing (left eye sees right image)"
                 }),
-                "output_type": (["stereo_sbs", "anaglyph"], {
-                    "default": "stereo_sbs",
+                "output_type": (["sbs", "anaglyph"], {
+                    "default": "sbs",
                     "tooltip": "Choose output format:\n- stereo_sbs: Side-by-side stereoscopic image for 3D viewing\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
                 }),                
                 "depth_blur_strength": ("INT", {
