@@ -97,6 +97,10 @@ class Y7_SideBySide:
                 "mode": (["parallel", "cross-eyed"], {
                     "tooltip": "Parallel: For normal, parallel viewing (left eye sees left image)\n-Cross-eyed: For cross-eyed viewing (left eye sees right image)"
                 }),
+                "output_type": (["stereo_sbs", "anaglyph"], {
+                    "default": "stereo_sbs",
+                    "tooltip": "Choose output format:\n- stereo_sbs: Side-by-side stereoscopic image for 3D viewing\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
+                }),                
                 "depth_blur_strength": ("INT", {
                     "default": 7, 
                     "min": 3, 
@@ -107,7 +111,7 @@ class Y7_SideBySide:
                 "convergence": ("FLOAT", {
                     "default": 0.5,
                     "min": 0.0,
-                    "max": 1.0,
+                    "max": 2.0,
                     "step": 0.05,
                     "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. For Anaglyph format."
                 }),
@@ -127,7 +131,7 @@ class Y7_SideBySide:
         return True        
 
     # ============================================================
-    def process_image_sbs(self, method, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.5):
+    def process_image_sbs(self, method, base_image, depth_map, depth_scale, mode="parallel", output_type="stereo_sbs", depth_blur_strength=7, convergence=0.5):
         
         # add simple 2-step progress bar
         progress = ProgressBar(2)  # Just two steps for individual image        
@@ -135,10 +139,16 @@ class Y7_SideBySide:
         progress.update(1)  # First step
 
         result = None 
-        if method == "grid_sampling":
-            result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
-        elif method == "mesh_warping":            
-            result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
+        
+        if output_type == "stereo_sbs":
+            # Call existing SBS functions
+            if method == "grid_sampling":
+                result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
+            elif method == "mesh_warping":            
+                result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
+        elif output_type == "anaglyph":
+            # Call new anaglyph function
+            result = process_image_anaglyph(device, base_image, depth_map, depth_scale, method, depth_blur_strength, convergence)
 
         progress.update(1)  # Final step 
         return result # Return the stored result
@@ -818,6 +828,58 @@ def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30
     # Return as a tuple to match the expected return format
     return (sbs_image_tensor,)
 
+
+# IMAGE - ANAGLYPH
+def process_image_anaglyph(device, base_image, depth_map, depth_scale=30, method="mesh_warping", depth_blur_strength=7, convergence=0.5):
+    """
+    Creates an anaglyph (red-cyan) stereoscopic image from a base image and depth map.
+    
+    Args:
+    - device: The torch device (e.g., 'cuda' or 'cpu')
+    - base_image: torch.Tensor of shape [B, H, W, C], values in [0, 1]
+    - depth_map: torch.Tensor of shape [B, H, W, 1] or [B, H, W, C], values in [0, 1]
+    - depth_scale: Controls the strength of the 3D effect
+    - method: "grid_sampling" or "mesh_warping" - determines which SBS method to use internally
+    - depth_blur_strength: Controls blur kernel size (odd values from 3-15)
+    - convergence: Sets the convergence point (zero disparity plane)
+    
+    Returns:
+    - Tuple containing anaglyph image tensor of shape [B, H, W, C]
+    """
+    
+    # First, generate the stereo pair using the existing SBS functions
+    if method == "grid_sampling":
+        sbs_result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, "parallel", depth_blur_strength, convergence)
+    elif method == "mesh_warping":
+        sbs_result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, "parallel", depth_blur_strength, convergence)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    
+    # Extract the SBS image from the result tuple
+    sbs_image = sbs_result[0]  # Shape: [B, H, W*2, C]
+    
+    # Get dimensions
+    B, H, W_double, C = sbs_image.shape
+    assert C == 3, "Anaglyph requires RGB input (3 channels)."
+    W = W_double // 2  # Original width
+    
+    # Split the SBS image into left and right views
+    # Always use "parallel" mode here: we want left eye on the left side and right eye on the right side
+    left_view = sbs_image[:, :, :W, :]      # Left half
+    right_view = sbs_image[:, :, W:, :]     # Right half
+    
+    # Create anaglyph by combining red channel from left view with green/blue from right view
+    # This creates the classic red-cyan anaglyph effect
+    anaglyph = torch.zeros_like(left_view)
+    
+    # Red channel from left eye (appears red when viewed without glasses)
+    anaglyph[:, :, :, 0] = left_view[:, :, :, 0]  # Red from left
+    
+    # Green and blue channels from right eye (appears cyan when viewed without glasses)
+    anaglyph[:, :, :, 1] = right_view[:, :, :, 1]  # Green from right
+    anaglyph[:, :, :, 2] = right_view[:, :, :, 2]  # Blue from right
+    
+    return (anaglyph,)
 
 
 # ========================= Helper Functions =========================
