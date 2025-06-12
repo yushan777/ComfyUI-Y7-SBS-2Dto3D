@@ -40,7 +40,7 @@ from ..utils.colored_print import color, style
 
 
 # The convergence parameter controls the zero-disparity plane (where objects appear at screen depth).
-# This is more important if you plan on converting the outputs into anaglyph format
+# This is more important for the anaglyph format
 # 
 # ┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 # │ Convergence     │                                Effect                                           │
