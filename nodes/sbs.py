@@ -140,7 +140,7 @@ class Y7_SideBySide:
 
         result = None 
         
-        if output_type == "stereo_sbs":
+        if output_type == "sbs":
             # Call existing SBS functions
             if method == "grid_sampling":
                 result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
