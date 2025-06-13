@@ -38,23 +38,7 @@ from ..utils.colored_print import color, style
 # │ 0.5                │  Strong smoothing — maximizes stability, but may cause lag in depth response during rapid scene changes.│
 # └────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-
-# The convergence parameter controls the zero-disparity plane (where objects appear at screen depth).
-# This is more important for the anaglyph format
-# 
-# ┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────┐
-# │ Convergence     │                                Effect                                           │
-# │ Value           │                                                                                 │
-# ├─────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
-# │ 0.0             │ Far objects (black in depth map) appear at screen depth                        │
-# │ 0.5 (default)   │ Middle depth objects appear at screen depth - balanced for most content        │
-# │ 1.0+            │ Near objects (white in depth map) appear at screen depth                       │
-# └─────────────────┴─────────────────────────────────────────────────────────────────────────────────┘
-#
-# Proper convergence eliminates excessive "split" and reduces eye strain.
-# This applies to anaglyph more than standard SBS
-# Adjust convergence based on your content - portraits may benefit from higher values (0.6-0.8),
-# while landscapes may work better with lower values (0.3-0.5).
+# When outoutting anaglyphs, convergence value of 0.5 is used to reduce ghosting
 
 DEBUG_MODE = False  # Set to False to disable debug left/right tinting
 
@@ -108,18 +92,11 @@ class Y7_SideBySide:
                     "step": 2,
                     "tooltip": "Controls how much to blur the depth map transitions. Higher values create smoother depth transitions but may lose detail. 3-15. Odd values only."
                 }),
-                "convergence": ("FLOAT", {
-                    "default": 0.5,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "step": 0.05,
-                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. For Anaglyph format."
-                }),
             },
         }
 
     RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "process_image_sbs"
+    FUNCTION = "process_image"
     CATEGORY = "Y7 SBS"
 
 
@@ -131,7 +108,7 @@ class Y7_SideBySide:
         return True        
 
     # ============================================================
-    def process_image_sbs(self, method, base_image, depth_map, depth_scale, mode="parallel", output_type="stereo_sbs", depth_blur_strength=7, convergence=0.5):
+    def process_image(self, method, base_image, depth_map, depth_scale, mode="parallel", output_type="stereo_sbs", depth_blur_strength=7):
         
         # add simple 2-step progress bar
         progress = ProgressBar(2)  # Just two steps for individual image        
@@ -143,12 +120,12 @@ class Y7_SideBySide:
         if output_type == "sbs":
             # Call existing SBS functions
             if method == "grid_sampling":
-                result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
+                result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
             elif method == "mesh_warping":            
-                result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, convergence)
+                result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
         elif output_type == "anaglyph":
-            # Call new anaglyph function
-            result = process_image_anaglyph(device, base_image, depth_map, depth_scale, method, depth_blur_strength, convergence)
+            # Call anaglyph function
+            result = process_image_anaglyph(device, base_image, depth_map, depth_scale, method, depth_blur_strength)
 
         progress.update(1)  # Final step 
         return result # Return the stored result
@@ -188,6 +165,10 @@ class Y7_VideoSideBySide:
                 "mode": (["parallel", "cross-eyed"], {
                     "tooltip": "Parallel: For parallel viewing (left eye sees left image). Cross-eyed: For cross-eyed viewing (left eye sees right image)"
                 }),
+                "output_type": (["sbs", "anaglyph"], {
+                    "default": "sbs",
+                    "tooltip": "Choose output format:\n- stereo_sbs: Side-by-side stereoscopic image for 3D viewing\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
+                }),                 
                 "depth_blur_strength": ("INT", {
                     "default": 7, 
                     "min": 3, 
@@ -209,26 +190,18 @@ class Y7_VideoSideBySide:
                     "step": 1,
                     "tooltip": "Number of frames to process at once. Lower values use less memory but may be slower."
                 }),
-                "convergence": ("FLOAT", {
-                    "default": 0.5,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "step": 0.05,
-                    "tooltip": "Sets the convergence point (zero disparity plane). 0.0 = far objects at screen depth, 0.5 = middle depth at screen, 1.0 = near objects at screen depth. For Anaglyph format."
-                }),
             },
         }
 
     RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "process_video_sbs" 
+    FUNCTION = "process_video" 
     CATEGORY = "Y7 SBS"
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
         return True
             
-    def process_video_sbs(self, frames, depth_maps, method="mesh_warping", depth_scale=30, mode="parallel", 
-                        depth_blur_strength=7, temporal_smoothing=0.2, batch_size=16, convergence=0.5):
+    def process_video(self, frames, depth_maps, method="mesh_warping", depth_scale=30, mode="parallel", output_type="stereo_sbs", depth_blur_strength=7, temporal_smoothing=0.2, batch_size=16, convergence=0.0):
         """        
         Main function for processing video frames, balancing GPU and CPU memory usage.
         
@@ -247,6 +220,14 @@ class Y7_VideoSideBySide:
         """
         # Get dimensions
         num_frames, height, width, channels = frames.shape
+        
+        # Determine output frame width based on output type
+        if output_type == "sbs":
+            output_frame_width = width * 2
+        elif output_type == "anaglyph":
+            output_frame_width = width
+        else:
+            raise ValueError(f"Unsupported output_type: {output_type}")
                 
         print(f"Processing {num_frames} frames with batch size {batch_size}", color.BLUE)
 
@@ -266,7 +247,7 @@ class Y7_VideoSideBySide:
         print(f"Using temporary memmap file: {temp_filename}", color.YELLOW)
 
         # Calculate final shape and create the memory-mapped file
-        final_shape = (num_frames, height, width * 2, channels)
+        final_shape = (num_frames, height, output_frame_width, channels)
         try:
             os.makedirs(os.path.dirname(temp_filename), exist_ok=True)
             memmap_array = np.memmap(temp_filename, dtype=numpy_dtype, mode='w+', shape=final_shape)
@@ -275,12 +256,16 @@ class Y7_VideoSideBySide:
             raise IOError(f"Failed to create memory-mapped file at {temp_filename}: {e}")
 
         # Choose processor function once
-        if method == "grid_sampling":
-            processor_fn = process_image_sbs_grid_sampling
-        elif method == "mesh_warping":
-            processor_fn = process_image_sbs_mesh_warping
-        else:
-            raise ValueError(f"Unknown processing method: {method}")
+        if output_type == "sbs":
+            if method == "grid_sampling":
+                processor_fn = process_image_sbs_grid_sampling
+            elif method == "mesh_warping":
+                processor_fn = process_image_sbs_mesh_warping
+            else:
+                raise ValueError(f"Unknown processing method: {method}")
+        elif output_type == "anaglyph":
+            processor_fn = process_image_anaglyph
+
                 
         # Pre-allocate reusable tensors for depth processing
         blur_buffer = None
@@ -299,7 +284,7 @@ class Y7_VideoSideBySide:
             batch_depth_maps = depth_maps[i:end_idx].to(self.device, dtype=target_dtype, non_blocking=True)
                         
             # Allocate output tensor for this batch
-            batch_output = torch.zeros((current_batch_size, height, width*2, channels), 
+            batch_output = torch.zeros((current_batch_size, height, output_frame_width, channels), 
                                     dtype=target_dtype, device=self.device)
             
             # Process each frame in the batch
@@ -371,10 +356,10 @@ class Y7_VideoSideBySide:
                     depth_for_frame = depth_for_processing.permute(0, 2, 3, 1)
                     
                     # Process frame with processor function
-                    processed_frame = processor_fn(
-                        self.device, current_frame, depth_for_frame, 
-                        depth_scale, mode, depth_blur_strength, convergence
-                    )[0]
+                    if output_type == "anaglyph":
+                        processed_frame = processor_fn(self.device, current_frame, depth_for_frame, depth_scale, method, depth_blur_strength, convergence)[0]
+                    else:  # output_type == "sbs"
+                        processed_frame = processor_fn(self.device, current_frame, depth_for_frame, depth_scale, mode, depth_blur_strength, convergence)[0]
                     
                     # Store in output tensor (direct assignment, no copies)
                     batch_output[j] = processed_frame[0]
@@ -573,7 +558,7 @@ class Y7_VideoSideBySide:
 
 # ======================= Processing Functions =======================
 # IMAGE - GRID SAMPLING
-def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.5):
+def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.0):
     """
     Create a side-by-side (SBS) stereoscopic image using grid_sampling method
     This implementation uses efficient vectorized operations for better performance.       
@@ -586,7 +571,9 @@ def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, 
     - mode: "parallel" or "cross-eyed".
     - depth_blur_strength: controls blur kernel size (odd values from 3-15). 
       - Make edges/transitions between depths smoother (at cost of a little detail loss).
-    
+    - convergence: only really needed if generating anaglyphs
+      - sbs: 0.0
+      - anaglyph: 0.5
     Returns:
     - sbs_image_tensor: (B, H, W*2, C)
     """
@@ -701,7 +688,7 @@ def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, 
 
 
 # IMAGE - MSH WARPING
-def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7, convergence=0.5):
+def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7, convergence=0.0):
     """
     Creates a side-by-side stereoscopic image using simple mesh warping method
     
@@ -841,12 +828,17 @@ def process_image_anaglyph(device, base_image, depth_map, depth_scale=30, method
     - depth_scale: Controls the strength of the 3D effect
     - method: "grid_sampling" or "mesh_warping" - determines which SBS method to use internally
     - depth_blur_strength: Controls blur kernel size (odd values from 3-15)
-    - convergence: Sets the convergence point (zero disparity plane)
+    - convergence: only really needed if generating anaglyphs
+      - sbs: 0.0
+      - anaglyph: 0.5
     
     Returns:
     - Tuple containing anaglyph image tensor of shape [B, H, W, C]
     """
     
+    # when outputing anaglyphs, we need some convergence to reduce ghost effects
+    convergence = 0.5
+
     # First, generate the stereo pair using the existing SBS functions
     if method == "grid_sampling":
         sbs_result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, "parallel", depth_blur_strength, convergence)
