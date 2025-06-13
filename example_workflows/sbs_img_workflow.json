@@ -1,96 +1,56 @@
 {
   "id": "775a53d9-9861-46e2-97c9-a96202bbe5ee",
   "revision": 0,
-  "last_node_id": 142,
-  "last_link_id": 352,
+  "last_node_id": 143,
+  "last_link_id": 355,
   "nodes": [
     {
-      "id": 113,
-      "type": "Label (rgthree)",
+      "id": 65,
+      "type": "LoadImage",
       "pos": [
-        -670,
-        -640
-      ],
-      "size": [
-        693.7744140625,
-        50
-      ],
-      "flags": {
-        "allow_interaction": true
-      },
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "title": "2D To 3D SBS Image Workflow",
-      "properties": {
-        "fontSize": 50,
-        "fontFamily": "Arial",
-        "fontColor": "#ffffff",
-        "textAlign": "left",
-        "backgroundColor": "transparent",
-        "padding": 0,
-        "borderRadius": 0
-      },
-      "color": "#fff0",
-      "bgcolor": "#fff0"
-    },
-    {
-      "id": 117,
-      "type": "MarkdownNote",
-      "pos": [
-        -928.0045166015625,
-        -534.7745971679688
-      ],
-      "size": [
-        240,
-        120
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "title": "Custom Nodes",
-      "properties": {},
-      "widgets_values": [
-        "[Y7 SBS 2DTo3D](https://github.com/yushan777/ComfyUI-Y7-SBS) \n\n[Depth Anything V2](https://github.com/kijai/ComfyUI-DepthAnythingV2) \n\n\n"
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
-    },
-    {
-      "id": 76,
-      "type": "SaveImage",
-      "pos": [
-        290,
+        -680,
         -530
       ],
       "size": [
-        510,
-        400
+        240,
+        340
       ],
-      "flags": {
-        "collapsed": false
-      },
-      "order": 13,
+      "flags": {},
+      "order": 3,
       "mode": 0,
-      "inputs": [
+      "inputs": [],
+      "outputs": [
         {
-          "name": "images",
+          "name": "IMAGE",
           "type": "IMAGE",
-          "link": 341
+          "slot_index": 0,
+          "links": [
+            181,
+            203,
+            291,
+            312,
+            346,
+            353
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 1,
+          "links": null
         }
       ],
-      "outputs": [],
       "properties": {
+        "Node name for S&R": "LoadImage",
         "cnr_id": "comfy-core",
-        "ver": "0.3.27",
-        "Node name for S&R": "SaveImage"
+        "ver": "0.3.27"
       },
       "widgets_values": [
-        "sbs-image/Y7SBS"
-      ]
+        "goldfish (1).jpg",
+        "image"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
     },
     {
       "id": 71,
@@ -116,116 +76,13 @@
       "outputs": [],
       "title": "Preview Image (Depth Map)",
       "properties": {
+        "Node name for S&R": "PreviewImage",
         "cnr_id": "comfy-core",
-        "ver": "0.3.27",
-        "Node name for S&R": "PreviewImage"
+        "ver": "0.3.27"
       },
       "widgets_values": [],
       "color": "#322",
       "bgcolor": "#533"
-    },
-    {
-      "id": 123,
-      "type": "easy imageSize",
-      "pos": [
-        -670,
-        -40
-      ],
-      "size": [
-        210,
-        108
-      ],
-      "flags": {},
-      "order": 9,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 347
-        }
-      ],
-      "outputs": [
-        {
-          "name": "width_int",
-          "type": "INT",
-          "links": null
-        },
-        {
-          "name": "height_int",
-          "type": "INT",
-          "links": null
-        }
-      ],
-      "title": "ImageSize (scaled)",
-      "properties": {
-        "cnr_id": "comfyui-easy-use",
-        "ver": "9292f2286207928cfdade99ad1634103470c0799",
-        "Node name for S&R": "easy imageSize"
-      },
-      "widgets_values": [
-        "Width: 1536 , Height: 1024"
-      ],
-      "color": "#2a363b",
-      "bgcolor": "#3f5159"
-    },
-    {
-      "id": 73,
-      "type": "DownloadAndLoadDepthAnythingV2Model",
-      "pos": [
-        -390,
-        -430
-      ],
-      "size": [
-        360,
-        60
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "da_v2_model",
-          "type": "DAMODEL",
-          "links": [
-            143
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui-depthanythingv2",
-        "ver": "1.0.1",
-        "Node name for S&R": "DownloadAndLoadDepthAnythingV2Model"
-      },
-      "widgets_values": [
-        "depth_anything_v2_vitl_fp16.safetensors"
-      ],
-      "color": "#322",
-      "bgcolor": "#533"
-    },
-    {
-      "id": 141,
-      "type": "Note",
-      "pos": [
-        10,
-        -200
-      ],
-      "size": [
-        260,
-        100
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "Depth Scale and depth blur strength:\n\nAdjust as desired for your image. Every image is different. "
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
     },
     {
       "id": 72,
@@ -262,116 +119,232 @@
             204,
             292,
             316,
-            344
+            354
           ]
         }
       ],
       "properties": {
+        "Node name for S&R": "DepthAnything_V2",
         "cnr_id": "comfyui-depthanythingv2",
-        "ver": "1.0.1",
-        "Node name for S&R": "DepthAnything_V2"
+        "ver": "1.0.1"
       },
       "widgets_values": [],
       "color": "#322",
       "bgcolor": "#533"
     },
     {
-      "id": 134,
-      "type": "Y7_SideBySide",
+      "id": 73,
+      "type": "DownloadAndLoadDepthAnythingV2Model",
       "pos": [
-        10,
-        -530
+        -390,
+        -430
       ],
       "size": [
-        260,
-        150
+        360,
+        60
       ],
       "flags": {},
-      "order": 12,
+      "order": 2,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "base_image",
-          "type": "IMAGE",
-          "link": 350
-        },
-        {
-          "name": "depth_map",
-          "type": "IMAGE",
-          "link": 344
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
+          "name": "da_v2_model",
+          "type": "DAMODEL",
           "links": [
-            341
+            143
           ]
         }
       ],
       "properties": {
-        "cnr_id": "comfyui-y7-sbs-2dto3d",
-        "ver": "2b031688d8cfbb99444f1a9817fa843a497b03dd",
-        "Node name for S&R": "Y7_SideBySide",
-        "aux_id": "yushan777/ComfyUI-Y7-SBS-2Dto3D"
+        "Node name for S&R": "DownloadAndLoadDepthAnythingV2Model",
+        "cnr_id": "comfyui-depthanythingv2",
+        "ver": "1.0.1"
       },
       "widgets_values": [
-        "mesh_warping",
-        80,
-        "parallel",
-        33
+        "depth_anything_v2_vitl_fp16.safetensors"
       ],
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#322",
+      "bgcolor": "#533"
     },
     {
-      "id": 65,
-      "type": "LoadImage",
+      "id": 76,
+      "type": "SaveImage",
       "pos": [
-        -680,
+        290,
         -530
       ],
       "size": [
-        240,
-        340
+        510,
+        400
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 355
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.27"
+      },
+      "widgets_values": [
+        "sbs-image/Y7SBS"
+      ]
+    },
+    {
+      "id": 113,
+      "type": "Label (rgthree)",
+      "pos": [
+        -670,
+        -640
+      ],
+      "size": [
+        693.7744140625,
+        50
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "2D To 3D SBS Image Workflow",
+      "properties": {
+        "fontSize": 50,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 116,
+      "type": "Note",
+      "pos": [
+        -390,
+        110
+      ],
+      "size": [
+        376.5630798339844,
+        151.6021728515625
       ],
       "flags": {},
       "order": 4,
       "mode": 0,
       "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "The Depth-Anything-V2 nodes will download the selected model into the directory \"models/depthanything\" if it does not exist.   \n\nThe default `...vitl-fp16` variant is approx 600MB.\n\nNote: If you are running on Apple Silicon, it seems to prefer the fp32 variant of the models otherwise it seems to crash"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 117,
+      "type": "MarkdownNote",
+      "pos": [
+        -928.0045166015625,
+        -534.7745971679688
+      ],
+      "size": [
+        240,
+        120
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Custom Nodes",
+      "properties": {},
+      "widgets_values": [
+        "[Y7 SBS 2DTo3D](https://github.com/yushan777/ComfyUI-Y7-SBS) \n\n[Depth Anything V2](https://github.com/kijai/ComfyUI-DepthAnythingV2) \n\n\n"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 123,
+      "type": "easy imageSize",
+      "pos": [
+        -670,
+        -40
+      ],
+      "size": [
+        210,
+        108
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 347
+        }
+      ],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "slot_index": 0,
-          "links": [
-            181,
-            203,
-            291,
-            312,
-            346,
-            350
-          ]
+          "name": "width_int",
+          "type": "INT",
+          "links": null
         },
         {
-          "name": "MASK",
-          "type": "MASK",
-          "slot_index": 1,
+          "name": "height_int",
+          "type": "INT",
           "links": null
         }
       ],
+      "title": "ImageSize (scaled)",
       "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.27",
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "easy imageSize",
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9292f2286207928cfdade99ad1634103470c0799"
       },
       "widgets_values": [
-        "goldfish (1).jpg",
-        "image"
+        "Width: 1536 , Height: 1024"
       ],
-      "color": "#223",
-      "bgcolor": "#335"
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 129,
+      "type": "Note",
+      "pos": [
+        6.619081974029541,
+        -301.1841125488281
+      ],
+      "size": [
+        260,
+        100
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "the SBS node will rescale the depth map's resolution to match the base_image's resolution if there is a mismatch. "
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
       "id": 135,
@@ -406,9 +379,9 @@
       ],
       "title": "Upscale/Downscale Image By",
       "properties": {
+        "Node name for S&R": "ImageScaleBy",
         "cnr_id": "comfy-core",
-        "ver": "0.3.28",
-        "Node name for S&R": "ImageScaleBy"
+        "ver": "0.3.28"
       },
       "widgets_values": [
         "bilinear",
@@ -416,52 +389,6 @@
       ],
       "color": "#432",
       "bgcolor": "#653"
-    },
-    {
-      "id": 129,
-      "type": "Note",
-      "pos": [
-        10,
-        -340
-      ],
-      "size": [
-        260,
-        100
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "the SBS node will rescale the depth map's resolution to match the base_image's resolution if there is a mismatch. "
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
-    },
-    {
-      "id": 116,
-      "type": "Note",
-      "pos": [
-        -390,
-        110
-      ],
-      "size": [
-        376.5630798339844,
-        151.6021728515625
-      ],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "The Depth-Anything-V2 nodes will download the selected model into the directory \"models/depthanything\" if it does not exist.   \n\nThe default `...vitl-fp16` variant is approx 600MB.\n\nNote: If you are running on Apple Silicon, it seems to prefer the fp32 variant of the models otherwise it seems to crash"
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
     },
     {
       "id": 137,
@@ -475,7 +402,7 @@
         320
       ],
       "flags": {},
-      "order": 7,
+      "order": 5,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -485,6 +412,77 @@
       ],
       "color": "#222",
       "bgcolor": "#000"
+    },
+    {
+      "id": 141,
+      "type": "Note",
+      "pos": [
+        5.926464080810547,
+        -156.74949645996094
+      ],
+      "size": [
+        260,
+        100
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "Depth Scale and depth blur strength:\n\nAdjust as desired for your image. Every image is different. "
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 143,
+      "type": "Y7_SideBySide",
+      "pos": [
+        10,
+        -530
+      ],
+      "size": [
+        250,
+        190
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "base_image",
+          "type": "IMAGE",
+          "link": 353
+        },
+        {
+          "name": "depth_map",
+          "type": "IMAGE",
+          "link": 354
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            355
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Y7_SideBySide"
+      },
+      "widgets_values": [
+        "mesh_warping",
+        40,
+        "parallel",
+        "sbs",
+        7
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
     }
   ],
   "links": [
@@ -502,22 +500,6 @@
       0,
       71,
       0,
-      "IMAGE"
-    ],
-    [
-      341,
-      134,
-      0,
-      76,
-      0,
-      "IMAGE"
-    ],
-    [
-      344,
-      72,
-      0,
-      134,
-      1,
       "IMAGE"
     ],
     [
@@ -545,10 +527,26 @@
       "IMAGE"
     ],
     [
-      350,
+      353,
       65,
       0,
-      134,
+      143,
+      0,
+      "IMAGE"
+    ],
+    [
+      354,
+      72,
+      0,
+      143,
+      1,
+      "IMAGE"
+    ],
+    [
+      355,
+      143,
+      0,
+      76,
       0,
       "IMAGE"
     ]
@@ -573,15 +571,21 @@
     "ds": {
       "scale": 1.3310000000000004,
       "offset": [
-        1250.2917851623586,
-        528.1890206404275
+        972.7279234042825,
+        683.0126964480905
       ]
     },
-    "frontendVersion": "1.20.7",
+    "frontendVersion": "1.21.3",
     "VHS_latentpreview": false,
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
-    "VHS_KeepIntermediate": true
+    "VHS_KeepIntermediate": true,
+    "node_versions": {
+      "comfy-core": "0.3.39",
+      "comfyui-easy-use": "1.3.0",
+      "comfyui-depthanythingv2": "9d7cb8c1e53b01744a75b599d3e91c93464a2d33",
+      "comfyui-y7-sbs-2dto3d": "ef6ca62d69f9089f0b1ac162c3cf09c16f113b9d"
+    }
   },
   "version": 0.4
 }
