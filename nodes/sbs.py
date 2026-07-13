@@ -80,14 +80,14 @@ class Y7_SideBySide:
                 "mode": (["parallel", "cross-eyed"], {
                     "tooltip": "Parallel: For normal, parallel viewing (left eye sees left image)\n-Cross-eyed: For cross-eyed viewing (left eye sees right image)"
                 }),
-                "output_type": (["sbs", "anaglyph"], {
+                "output_type": (["sbs", "top-bottom", "anaglyph"], {
                     "default": "sbs",
-                    "tooltip": "Choose output format:\n- stereo_sbs: Side-by-side stereoscopic image for 3D viewing\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
-                }),                
+                    "tooltip": "Choose output format:\n- sbs: Side-by-side stereoscopic image (left/right) for 3D viewing\n- top-bottom: Over-under stereoscopic image (left eye on top, right eye on bottom)\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
+                }),
                 "depth_blur_strength": ("INT", {
-                    "default": 7, 
-                    "min": 3, 
-                    "max": 33, 
+                    "default": 7,
+                    "min": 3,
+                    "max": 33,
                     "step": 2,
                     "tooltip": "Controls how much to blur the depth map transitions. Higher values create smoother depth transitions but may lose detail. 3-15. Odd values only."
                 }),
@@ -114,14 +114,16 @@ class Y7_SideBySide:
 
         progress.update(1)  # First step
 
-        result = None 
-        
-        if output_type == "sbs":
+        result = None
+
+        if output_type in ("sbs", "top-bottom"):
+            # Both share the same stereo pair; only the final layout differs
+            layout = "top-bottom" if output_type == "top-bottom" else "side-by-side"
             # Call existing SBS functions
             if method == "grid_sampling":
-                result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
-            elif method == "mesh_warping":            
-                result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength)
+                result = process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, layout=layout)
+            elif method == "mesh_warping":
+                result = process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale, mode, depth_blur_strength, layout=layout)
         elif output_type == "anaglyph":
             # Call anaglyph function
             result = process_image_anaglyph(device, base_image, depth_map, depth_scale, method, depth_blur_strength)
@@ -164,10 +166,10 @@ class Y7_VideoSideBySide:
                 "mode": (["parallel", "cross-eyed"], {
                     "tooltip": "Parallel: For parallel viewing (left eye sees left image). Cross-eyed: For cross-eyed viewing (left eye sees right image)"
                 }),
-                "output_type": (["sbs", "anaglyph"], {
+                "output_type": (["sbs", "top-bottom", "anaglyph"], {
                     "default": "sbs",
-                    "tooltip": "Choose output format:\n- stereo_sbs: Side-by-side stereoscopic image for 3D viewing\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
-                }),                 
+                    "tooltip": "Choose output format:\n- sbs: Side-by-side stereoscopic image (left/right) for 3D viewing\n- top-bottom: Over-under stereoscopic image (left eye on top, right eye on bottom)\n- anaglyph: Red-cyan anaglyph for viewing with red-cyan 3D glasses"
+                }),
                 "depth_blur_strength": ("INT", {
                     "default": 7, 
                     "min": 3, 
@@ -220,10 +222,15 @@ class Y7_VideoSideBySide:
         # Get dimensions
         num_frames, height, width, channels = frames.shape
         
-        # Determine output frame width based on output type
+        # Determine output frame dimensions based on output type
         if output_type == "sbs":
+            output_frame_height = height
             output_frame_width = width * 2
+        elif output_type == "top-bottom":
+            output_frame_height = height * 2
+            output_frame_width = width
         elif output_type == "anaglyph":
+            output_frame_height = height
             output_frame_width = width
         else:
             raise ValueError(f"Unsupported output_type: {output_type}")
@@ -246,7 +253,7 @@ class Y7_VideoSideBySide:
         print(f"Using temporary memmap file: {temp_filename}", color.YELLOW)
 
         # Calculate final shape and create the memory-mapped file
-        final_shape = (num_frames, height, output_frame_width, channels)
+        final_shape = (num_frames, output_frame_height, output_frame_width, channels)
         try:
             os.makedirs(os.path.dirname(temp_filename), exist_ok=True)
             memmap_array = np.memmap(temp_filename, dtype=numpy_dtype, mode='w+', shape=final_shape)
@@ -255,7 +262,10 @@ class Y7_VideoSideBySide:
             raise IOError(f"Failed to create memory-mapped file at {temp_filename}: {e}")
 
         # Choose processor function once
-        if output_type == "sbs":
+        # "sbs" and "top-bottom" share the same stereo processors; only the final
+        # layout differs (horizontal vs vertical stacking of the eye views).
+        if output_type in ("sbs", "top-bottom"):
+            layout = "top-bottom" if output_type == "top-bottom" else "side-by-side"
             if method == "grid_sampling":
                 processor_fn = process_image_sbs_grid_sampling
             elif method == "mesh_warping":
@@ -283,7 +293,7 @@ class Y7_VideoSideBySide:
             batch_depth_maps = depth_maps[i:end_idx].to(self.device, dtype=target_dtype, non_blocking=True)
                         
             # Allocate output tensor for this batch
-            batch_output = torch.zeros((current_batch_size, height, output_frame_width, channels), 
+            batch_output = torch.zeros((current_batch_size, output_frame_height, output_frame_width, channels),
                                     dtype=target_dtype, device=self.device)
             
             # Process each frame in the batch
@@ -357,8 +367,8 @@ class Y7_VideoSideBySide:
                     # Process frame with processor function
                     if output_type == "anaglyph":
                         processed_frame = processor_fn(self.device, current_frame, depth_for_frame, depth_scale, method, depth_blur_strength, convergence)[0]
-                    else:  # output_type == "sbs"
-                        processed_frame = processor_fn(self.device, current_frame, depth_for_frame, depth_scale, mode, depth_blur_strength, convergence)[0]
+                    else:  # output_type == "sbs" or "top-bottom"
+                        processed_frame = processor_fn(self.device, current_frame, depth_for_frame, depth_scale, mode, depth_blur_strength, convergence, layout)[0]
                     
                     # Store in output tensor (direct assignment, no copies)
                     batch_output[j] = processed_frame[0]
@@ -572,24 +582,25 @@ class Y7_VideoSideBySide:
 
 # ======================= Processing Functions =======================
 # IMAGE - GRID SAMPLING
-def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.0):
+def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, mode="parallel", depth_blur_strength=7, convergence=0.0, layout="side-by-side"):
     """
     Create a side-by-side (SBS) stereoscopic image using grid_sampling method
-    This implementation uses efficient vectorized operations for better performance.       
-    
+    This implementation uses efficient vectorized operations for better performance.
+
     Args:
     - device: The torch device (e.g., 'cuda' or 'cpu').
     - base_image: Tensor representing the base image (B, H, W, C).
     - depth_map: Tensor representing the depth map (B, H, W, 1 or 3).
     - depth_scale: Integer for pixel shift scaling.
     - mode: "parallel" or "cross-eyed".
-    - depth_blur_strength: controls blur kernel size (odd values from 3-15). 
+    - depth_blur_strength: controls blur kernel size (odd values from 3-15).
       - Make edges/transitions between depths smoother (at cost of a little detail loss).
     - convergence: only really needed if generating anaglyphs
       - sbs: 0.0
       - anaglyph: 0.5
+    - layout: "side-by-side" (eyes stacked horizontally) or "top-bottom" (eyes stacked vertically).
     Returns:
-    - sbs_image_tensor: (B, H, W*2, C)
+    - stereo_image_tensor: (B, H, W*2, C) for side-by-side, (B, H*2, W, C) for top-bottom
     """
 
     # print(f"Processing Grid Sampling Method", color.BLUE)
@@ -687,25 +698,31 @@ def process_image_sbs_grid_sampling(device, base_image, depth_map, depth_scale, 
         right_view = right_view * torch.tensor([0.5, 1.0, 1.0], device=right_view.device).view(1, 3, 1, 1)  # cyan
     # =======================================
 
-    # Handle viewing mode
+    # Handle viewing mode - determine which eye view comes first
     if mode == "parallel":
-        # For parallel viewing, left eye image goes on left side
-        sbs = torch.cat([left_view, right_view], dim=3)
-    elif mode == "cross-eyed":
-        # For cross-eyed viewing, right eye image goes on left side
-        sbs = torch.cat([right_view, left_view], dim=3)
-    
-    # Convert back to [B, H, W*2, C] format for ComfyUI
+        # For parallel viewing, left eye image goes first (left/top)
+        first_view, second_view = left_view, right_view
+    else:  # cross-eyed
+        # For cross-eyed viewing, right eye image goes first (left/top)
+        first_view, second_view = right_view, left_view
+
+    # Stack the two eye views according to layout (views are NCHW: dim 2=H, dim 3=W)
+    if layout == "top-bottom":
+        sbs = torch.cat([first_view, second_view], dim=2)  # stack vertically
+    else:  # side-by-side
+        sbs = torch.cat([first_view, second_view], dim=3)  # stack horizontally
+
+    # Convert back to [B, H, W, C] format for ComfyUI
     sbs_image_tensor = sbs.permute(0, 2, 3, 1)
-    
+
     return (sbs_image_tensor,)
 
 
 # IMAGE - MSH WARPING
-def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7, convergence=0.0):
+def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30, mode="parallel", depth_blur_strength=7, convergence=0.0, layout="side-by-side"):
     """
     Creates a side-by-side stereoscopic image using simple mesh warping method
-    
+
     Args:
     - device: The torch device (e.g., 'cuda' or 'cpu').
     - base_image: torch.Tensor of shape [B, H, W, C], values in [0, 1]
@@ -713,9 +730,11 @@ def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30
     - depth_scale: Controls the strength of the 3D effect (used to calculate eye_separation)
     - mode: "parallel" or "cross-eyed" viewing mode
     - depth_blur_strength: Controls blur kernel size (odd values from 3-15).
-    
+    - layout: "side-by-side" (eyes stacked horizontally) or "top-bottom" (eyes stacked vertically).
+
     Returns:
-    - Tuple containing SBS image tensor of shape [B, H, W*2, C]
+    - Tuple containing stereo image tensor of shape [B, H, W*2, C] for side-by-side
+      or [B, H*2, W, C] for top-bottom
     """
 
     # print(f"Processing Mesh Warping Method", color.BLUE)
@@ -820,11 +839,17 @@ def process_image_sbs_mesh_warping(device, base_image, depth_map, depth_scale=30
 
     # =======================================
 
-    # Concatenate side by side with mode handling
+    # Determine which eye view comes first based on viewing mode
     if mode == "parallel":
-        sbs_image_tensor = torch.cat([left, right], dim=2)  # left image on the left
-    else:  # Cross-eyed
-        sbs_image_tensor = torch.cat([right, left], dim=2)  # left image on the right
+        first_view, second_view = left, right  # left eye first (left/top)
+    else:  # cross-eyed
+        first_view, second_view = right, left  # right eye first (left/top)
+
+    # Stack the two eye views according to layout (views are NHWC: dim 1=H, dim 2=W)
+    if layout == "top-bottom":
+        sbs_image_tensor = torch.cat([first_view, second_view], dim=1)  # stack vertically
+    else:  # side-by-side
+        sbs_image_tensor = torch.cat([first_view, second_view], dim=2)  # stack horizontally
 
     # Return as a tuple to match the expected return format
     return (sbs_image_tensor,)
