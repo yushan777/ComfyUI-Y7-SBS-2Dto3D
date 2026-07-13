@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import tempfile
-import time
 import os
 import gc
 from comfy.utils import ProgressBar
@@ -374,10 +373,19 @@ class Y7_VideoSideBySide:
                 
             except Exception as e:
                 print(f"Error writing batch to memmap: {e}", color.RED)
-                # Clean up
+                # Clean up: close the mmap handle first so the OS releases the file
+                # (an open mapping blocks deletion on Windows).
+                try:
+                    memmap_array._mmap.close()
+                except Exception:
+                    pass
                 del memmap_array
+                gc.collect()
                 if os.path.exists(temp_filename):
-                    os.remove(temp_filename)
+                    try:
+                        os.remove(temp_filename)
+                    except Exception:
+                        pass
                 raise IOError(f"Failed to write to memory-mapped file: {e}")
             
             # Update progress
@@ -398,21 +406,27 @@ class Y7_VideoSideBySide:
         # Create final tensor from memmap
         try:
             print(f"Creating final tensor from memmap", color.YELLOW)
-            final_tensor = torch.from_numpy(memmap_array).to(target_dtype)
+            # np.array(...) forces a full copy into a RAM-resident array so the
+            # returned tensor no longer references the memory-mapped file. Without
+            # this copy, torch.from_numpy() shares the memmap's buffer and keeps the
+            # file open, which prevents deletion on Windows (WinError 32).
+            final_tensor = torch.from_numpy(np.array(memmap_array)).to(target_dtype)
             print(f"Successfully created final tensor", color.GREEN)
             return (final_tensor,)
         except Exception as e:
             print(f"Error creating final tensor: {e}", color.RED)
-            del memmap_array
-            if os.path.exists(temp_filename):
-                os.remove(temp_filename)
             raise RuntimeError(f"Failed to create final tensor: {e}")
         finally:
             # Always clean up resources
             if 'memmap_array' in locals():
+                # Explicitly close the underlying mmap handle so the OS releases the
+                # file. On Windows an open mapping blocks deletion (WinError 32).
+                try:
+                    memmap_array._mmap.close()
+                except Exception:
+                    pass
                 del memmap_array
                 gc.collect()
-                time.sleep(0.1)  # 100ms delay
             if os.path.exists(temp_filename):
                 try:
                     os.remove(temp_filename)
